@@ -16,10 +16,10 @@ public extension Geometry {
     /**
     Creates an `Array` of `Geometry` instances from a GeoJSON file.
     
-    - parameter URL: the URL pointing to the GeoJSON file.
+     - parameter URL: the URL pointing to the GeoJSON file.
     
-    :returns: An optional `Array` of `Geometry` instances.
-*/
+     - returns: An optional `Array` of `Geometry` instances.
+     */
     public class func fromGeoJSON(_ URL: Foundation.URL) throws -> Array<Geometry>? {
         
         if let JSONData = try? Data(contentsOf: URL) {
@@ -43,11 +43,37 @@ public extension Geometry {
     }
     
     /**
+     Creates an `Array` of `Geometry` instances from a GeoJSON string.
+     
+     - parameter string: the GeoJSON string.
+     
+     - returns: An optional `Array` of `Geometry` instances.
+     */
+    public class func fromGeoJSONString(_ string: String) -> Array<Geometry>? {
+        
+        do {
+            // read JSON file
+            let parsedObject = try JSONSerialization.jsonObject(with: string,
+                options: JSONSerialization.ReadingOptions.allowFragments) as? NSDictionary
+            
+            // is the root a Dictionary with a "type" key of value "FeatureCollection"?
+            if let rootObject = parsedObject as? Dictionary<String, AnyObject> {
+                return Geometry.fromGeoJSONDictionary(rootObject)
+            } else {
+                throw GEOJSONParseError.invalidGEOJSON
+            }
+        } catch _ {
+            throw GEOJSONParseError.invalidJSON
+        }
+        return nil
+    }
+    
+    /**
     Creates an `Array` of `Geometry` instances from a GeoJSON dictionary.
     
-    :param: dictionary a dictionary following GeoJSON format specification.
+     - parameter dictionary: a dictionary following GeoJSON format specification.
     
-    :returns: An optional `Array` of `Geometry` instances.
+     - returns: An optional `Array` of `Geometry` instances.
     */
     public class func fromGeoJSONDictionary(_ dictionary: Dictionary<String, AnyObject>) -> Array<Geometry>? {
         return ParseGEOJSONObject(dictionary)

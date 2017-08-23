@@ -23,21 +23,7 @@ public extension Geometry {
     public class func fromGeoJSON(_ URL: Foundation.URL) throws -> Array<Geometry>? {
         
         if let JSONData = try? Data(contentsOf: URL) {
-            
-            do {
-                // read JSON file
-                let parsedObject = try JSONSerialization.jsonObject(with: JSONData,
-                    options: JSONSerialization.ReadingOptions.allowFragments) as? NSDictionary
-                
-                // is the root a Dictionary with a "type" key of value "FeatureCollection"?
-                if let rootObject = parsedObject as? Dictionary<String, AnyObject> {
-                    return Geometry.fromGeoJSONDictionary(rootObject)
-                } else {
-                    throw GEOJSONParseError.invalidGEOJSON
-                }
-            } catch _ {
-                throw GEOJSONParseError.invalidJSON
-            }
+            return try fromGeoJSONData(JSONData)
         }
         return nil
     }
@@ -49,12 +35,25 @@ public extension Geometry {
      
      - returns: An optional `Array` of `Geometry` instances.
      */
-    public class func fromGeoJSONString(_ string: String) -> Array<Geometry>? {
-        
+    public class func fromGeoJSONString(_ string: String) throws -> Array<Geometry>? {
+        if let data = string.data(using: .utf8) {
+            return try fromGeoJSONData(data)
+        }
+        return nil
+    }
+    
+    /**
+     Creates an `Array` of `Geometry` instances from GeoJSON data.
+     
+     - parameter data: the GeoJSON data.
+     
+     - returns: An optional `Array` of `Geometry` instances.
+     */
+    public class func fromGeoJSONData(_ data: Data) throws -> Array<Geometry>? {
         do {
             // read JSON file
-            let parsedObject = try JSONSerialization.jsonObject(with: string,
-                options: JSONSerialization.ReadingOptions.allowFragments) as? NSDictionary
+            let parsedObject = try JSONSerialization.jsonObject(with: data,
+                                                                options: JSONSerialization.ReadingOptions.allowFragments) as? NSDictionary
             
             // is the root a Dictionary with a "type" key of value "FeatureCollection"?
             if let rootObject = parsedObject as? Dictionary<String, AnyObject> {
@@ -65,7 +64,6 @@ public extension Geometry {
         } catch _ {
             throw GEOJSONParseError.invalidJSON
         }
-        return nil
     }
     
     /**
